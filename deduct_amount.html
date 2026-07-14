@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deduct Amount</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="form-box">
+    <h2>Deduct Amount from Job</h2>
+    <div id="content"></div>
+</div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobId = Util.qs("job_id");
+    const content = document.getElementById("content");
+
+    function renderForm(job) {
+        content.innerHTML = `
+            <div class="container">
+                <div id="resultMessage"></div>
+                <form id="deductForm">
+                    <label>Current Remaining Amount:</label>
+                    <input type="text" value="₹${Util.money(job.remaining)}" readonly>
+
+                    <label>Amount to Deduct:</label>
+                    <input type="number" name="cut_amount" id="cut_amount" required step="0.01" min="0" max="${job.remaining}">
+
+                    <button type="submit">Deduct</button>
+                </form>
+            </div>`;
+
+        document.getElementById("deductForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const cutAmount = parseFloat(document.getElementById("cut_amount").value);
+            const updated = DB.Jobs.deductRemaining(jobId, cutAmount);
+            content.innerHTML = `
+                <div class="message">
+                    ₹${Util.money(cutAmount)} successfully deducted.<br>
+                    New Remaining Amount: ₹${Util.money(updated.remaining)}
+                </div>
+                <p style="text-align:center;"><a href="view_job.html?worker_id=${updated.worker_id}">🔙 Back to View Job</a></p>`;
+        });
+    }
+
+    if (!jobId) {
+        content.innerHTML = `<p style="color:red;">No Job ID specified.</p>`;
+    } else {
+        const job = DB.Jobs.get(jobId);
+        if (!job) {
+            content.innerHTML = `<p style="color:red;">Job not found for ID: ${jobId}</p>`;
+        } else {
+            renderForm(job);
+        }
+    }
+</script>
+</body>
+</html>

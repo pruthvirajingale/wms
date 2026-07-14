@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Worker</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+    .main-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        padding: 20px;
+    }
+    .main-container .card { margin: 0; }
+</style>
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="main-container">
+    <div class="card">
+        <h2>Add New Worker</h2>
+        <form id="addWorkerForm">
+            <label for="name">Worker Name:</label>
+            <input type="text" id="name" name="name" required placeholder="Enter worker name">
+
+            <label for="contact">Contact Number:</label>
+            <input type="tel" id="contact" name="contact" required pattern="[0-9]{10}" placeholder="10-digit number" title="Enter a valid 10-digit number">
+
+            <label for="address">Address:</label>
+            <textarea id="address" name="address" placeholder="Enter full address (optional)"></textarea>
+
+            <button type="submit">Add Worker</button>
+        </form>
+
+        <div id="resultMessage"></div>
+    </div>
+</div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    document.getElementById("addWorkerForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const name = document.getElementById("name").value.trim();
+        const contact = document.getElementById("contact").value.trim();
+        const address = document.getElementById("address").value.trim();
+
+        try {
+            const worker = DB.Workers.add(name, contact, address);
+            document.getElementById("resultMessage").innerHTML = `
+                <div class="message">
+                    Worker "${Util.escapeHtml(worker.name)}" added successfully!<br>
+                    Worker ID: <strong>${worker.id}</strong>
+                </div>`;
+            document.getElementById("addWorkerForm").reset();
+        } catch (err) {
+            document.getElementById("resultMessage").innerHTML =
+                `<div class="error">Error: ${Util.escapeHtml(err.message)}</div>`;
+        }
+    });
+</script>
+</body>
+</html>

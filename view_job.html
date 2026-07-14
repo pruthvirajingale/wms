@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Jobs by Worker</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+    .form-box, .result-box { max-width: 1050px; }
+    .result-box form { align-items: stretch; }
+</style>
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="form-box">
+    <h2>View Jobs Assigned to a Worker</h2>
+    <form id="searchForm" style="align-items:center;">
+        <label>Enter Worker ID:</label>
+        <input type="number" name="worker_id" id="worker_id_input" required>
+        <button class="btn" type="submit" style="background-color:#1c2833; color:white;">Search</button>
+    </form>
+</div>
+
+<div id="resultContainer"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const workerIdParam = Util.qs("worker_id");
+    if (workerIdParam) {
+        document.getElementById("worker_id_input").value = workerIdParam;
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const id = document.getElementById("worker_id_input").value;
+        window.location.href = "view_job.html?worker_id=" + encodeURIComponent(id);
+    });
+
+    function renderResults() {
+        const container = document.getElementById("resultContainer");
+        if (!workerIdParam) {
+            container.innerHTML = "";
+            return;
+        }
+
+        const workerId = Number(workerIdParam);
+        const jobs = DB.Jobs.byWorker(workerId);
+
+        let rowsHtml = "";
+        jobs.forEach(j => {
+            rowsHtml += `
+                <tr>
+                    <td>
+                        <input type="checkbox" name="job_id" value="${j.id}"
+                               data-total="${j.total}"
+                               data-advance="${j.advance}"
+                               data-paid="${j.paid}"
+                               data-remaining="${j.remaining}">
+                    </td>
+                    <td>${j.id}</td>
+                    <td>₹${Util.money(j.total)}</td>
+                    <td><a class="amount-link" href="update_amount.html?type=advance&job_id=${j.id}">₹${Util.money(j.advance)}</a></td>
+                    <td><a class="amount-link paid" href="update_amount.html?type=paid&job_id=${j.id}">₹${Util.money(j.paid)}</a></td>
+                    <td><strong>₹${Util.money(j.remaining)}</strong></td>
+                    <td>${j.days}</td>
+                    <td>${Util.escapeHtml(j.route)}</td>
+                    <td>
+                        <a href="deduct_amount.html?job_id=${j.id}">Deduct</a><br>
+                        <a href="edit_job.html?job_id=${j.id}">Edit</a><br>
+                        <a href="#" onclick="deleteJob(${j.id}); return false;">Delete</a>
+                    </td>
+                </tr>`;
+        });
+
+        const tableHtml = `
+            <table>
+                <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Job ID</th>
+                    <th>Total</th>
+                    <th>Advance</th>
+                    <th>Paid</th>
+                    <th>Remaining</th>
+                    <th>Days</th>
+                    <th>Route</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>${rowsHtml}</tbody>
+            </table>`;
+
+        const noJobsHtml = `<p class="no-jobs">No job found for this Worker ID.</p>`;
+
+        const summaryHtml = `
+            <div class="summary-box">
+                <h4>Selected Job Summary</h4>
+                <p>Total Amount: ₹<span id="sumTotal">0.00</span></p>
+                <p>Advance: ₹<span id="sumAdvance">0.00</span></p>
+                <p>Paid: ₹<span id="sumPaid">0.00</span></p>
+                <p>Remaining: ₹<span id="sumRemaining">0.00</span></p>
+            </div>
+            <div style="text-align:center;">
+                <button type="submit" class="btn print">🖨️ Print Selected Jobs</button>
+            </div>`;
+
+        container.innerHTML = `
+            <div class="result-box">
+                <h3>Job Details for Worker ID: ${workerId}</h3>
+                <form method="get" action="print_job.html" id="printForm" target="_blank">
+                    <input type="hidden" name="worker_id" value="${workerId}">
+                    ${tableHtml}
+                    ${jobs.length === 0 ? noJobsHtml : summaryHtml}
+                </form>
+            </div>`;
+
+        if (jobs.length > 0) {
+            const checkboxes = document.querySelectorAll("input[name='job_id']");
+            const sumTotal = document.getElementById("sumTotal");
+            const sumAdvance = document.getElementById("sumAdvance");
+            const sumPaid = document.getElementById("sumPaid");
+            const sumRemaining = document.getElementById("sumRemaining");
+
+            function updateSummary() {
+                let total = 0, advance = 0, paid = 0, remaining = 0;
+                checkboxes.forEach(cb => {
+                    if (cb.checked) {
+                        total += parseFloat(cb.dataset.total);
+                        advance += parseFloat(cb.dataset.advance);
+                        paid += parseFloat(cb.dataset.paid);
+                        remaining += parseFloat(cb.dataset.remaining);
+                    }
+                });
+                sumTotal.innerText = total.toFixed(2);
+                sumAdvance.innerText = advance.toFixed(2);
+                sumPaid.innerText = paid.toFixed(2);
+                sumRemaining.innerText = remaining.toFixed(2);
+            }
+
+            checkboxes.forEach(cb => cb.addEventListener("change", updateSummary));
+        }
+    }
+
+    function deleteJob(jobId) {
+        if (!confirm("Are you sure you want to delete this job?")) return;
+        DB.Jobs.delete(jobId);
+        renderResults();
+    }
+
+    renderResults();
+</script>
+</body>
+</html>

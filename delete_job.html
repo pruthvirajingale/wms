@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delete Job</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="container" id="content"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobId = Util.qs("job_id");
+    const content = document.getElementById("content");
+
+    function showConfirm() {
+        content.innerHTML = `
+            <h2>Are you sure you want to delete Job ID: ${jobId}?</h2>
+            <button class="btn confirm" onclick="doDelete()">Yes, Delete</button>
+            <button class="btn cancel" onclick="doCancel()">Cancel</button>`;
+    }
+
+    function doDelete() {
+        const job = DB.Jobs.get(jobId);
+        const workerId = job ? job.worker_id : null;
+        const success = DB.Jobs.delete(jobId);
+        if (success) {
+            content.innerHTML = `
+                <div class="message">Job ID ${jobId} deleted successfully.</div>
+                <p style="text-align:center;"><a href="${workerId ? 'view_job.html?worker_id=' + workerId : 'view_job.html'}">Back to Jobs</a></p>`;
+        } else {
+            content.innerHTML = `<p class="error">Job not found or already deleted.</p>`;
+        }
+    }
+
+    function doCancel() {
+        content.innerHTML = `
+            <div class="message">Deletion cancelled.</div>
+            <p style="text-align:center;"><a href="view_job.html">Back to Jobs</a></p>`;
+    }
+
+    if (!jobId) {
+        content.innerHTML = `
+            <p class="error">No Job ID specified.</p>
+            <p style="text-align:center;"><a href="view_job.html">Back</a></p>`;
+    } else {
+        showConfirm();
+    }
+</script>
+</body>
+</html>

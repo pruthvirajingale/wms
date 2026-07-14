@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Update Amount</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="container" id="content"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobId = Util.qs("job_id");
+    const type = Util.qs("type"); // 'advance' or 'paid'
+    const content = document.getElementById("content");
+
+    function redirectUrlFor(workerId) {
+        return "view_job.html?worker_id=" + workerId;
+    }
+
+    function renderAdvanceHistory(jId) {
+        const entries = DB.Advances.forJob(jId);
+        if (entries.length === 0) {
+            return `
+                <hr>
+                <h3>Advance History</h3>
+                <table>
+                    <thead><tr><th>#</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead>
+                    <tbody><tr><td colspan="4" class="no-jobs">No advance entries.</td></tr></tbody>
+                </table>`;
+        }
+        const rows = entries.map((a, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td>₹${Util.money(a.amount)}</td>
+                <td>${Util.formatDate(a.date_given)}</td>
+                <td>
+                    <a href="#" class="btn danger" onclick="deleteAdvance(${a.id}, ${jId}); return false;">Delete</a>
+                </td>
+            </tr>`).join("");
+        return `
+            <hr>
+            <h3>Advance History</h3>
+            <table>
+                <thead><tr><th>#</th><th>Amount</th><th>Date</th><th>Action</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>`;
+    }
+
+    function deleteAdvance(id, jId) {
+        if (!confirm("Delete this advance entry?")) return;
+        DB.Advances.delete(id);
+        DB.Jobs.recalcAdvance(jId);
+        render();
+    }
+
+    function render() {
+        if (!jobId || !type) {
+            content.innerHTML = `<div class="error">❌ Missing job ID or amount type.</div>`;
+            return;
+        }
+
+        const job = DB.Jobs.get(jobId);
+        if (!job) {
+            content.innerHTML = `<div class="error">❌ Job not found.</div>`;
+            return;
+        }
+
+        const label = type === "advance" ? "Advance" : "Paid";
+        const historyHtml = type === "advance" ? renderAdvanceHistory(jobId) : "";
+
+        content.innerHTML = `
+            <h3>Update ${label} Amount</h3>
+            <form id="updateForm">
+                <label>Enter ${label} amount:</label>
+                <input type="number" name="amount" id="amount" required step="0.01" min="0">
+                <button type="submit" class="btn primary">Submit</button>
+            </form>
+            <div id="resultMessage"></div>
+            ${historyHtml}`;
+
+        document.getElementById("updateForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById("amount").value);
+
+            if (type === "advance") {
+                DB.Advances.add(jobId, amount);
+                DB.Jobs.recalcAdvance(jobId);
+            } else if (type === "paid") {
+                DB.Jobs.setPaid(jobId, amount);
+            }
+
+            document.getElementById("resultMessage").innerHTML =
+                `<div class="message">✅ ${label} amount updated successfully.</div>`;
+
+            setTimeout(function () {
+                window.location.href = redirectUrlFor(job.worker_id);
+            }, 1500);
+        });
+    }
+
+    render();
+</script>
+</body>
+</html>

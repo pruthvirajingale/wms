@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Printable Job Report</title>
+<link rel="stylesheet" href="assets/styles.css">
+<style>
+    body { background: #f4f4f4; padding: 30px; }
+    @media print { body { padding: 0; } }
+</style>
+</head>
+<body>
+
+<div id="content"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const selectedJobs = Util.qsAll("job_id");
+    const workerId = Util.qs("worker_id");
+    const content = document.getElementById("content");
+
+    function render() {
+        if (selectedJobs.length === 0 || !workerId) {
+            content.innerHTML = `<p style="color:red; text-align:center; font-size: 18px; margin-top: 40px;">❌ No jobs selected for printing.</p>`;
+            return;
+        }
+
+        const worker = DB.Workers.get(workerId);
+        const workerName = worker ? worker.name : "Unknown";
+
+        let gTotal = 0, gAdv = 0, gPaid = 0, gRem = 0;
+        let jobsHtml = "";
+
+        selectedJobs.forEach(jobIdStr => {
+            const job = DB.Jobs.get(jobIdStr);
+            if (!job) return;
+
+            gTotal += job.total;
+            gAdv += job.advance;
+            gPaid += job.paid;
+            gRem += job.remaining;
+
+            const advances = DB.Advances.forJob(job.id);
+            const advRowsHtml = advances.length > 0
+                ? advances.map((a, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>₹${Util.money(a.amount)}</td>
+                        <td>${Util.formatDate(a.date_given)}</td>
+                    </tr>`).join("")
+                : `<tr><td colspan="3">No advance entries.</td></tr>`;
+
+            jobsHtml += `
+                <div class="job-box">
+                    <div class="job-header">Job ID: ${job.id} | Route: ${Util.escapeHtml(job.route)} | Days: ${job.days}</div>
+                    <table>
+                        <tr>
+                            <th>SqFt</th><th>Rate Type</th><th>Rate</th><th>Total</th>
+                            <th>Advance</th><th>Paid</th><th>Remaining</th>
+                        </tr>
+                        <tr>
+                            <td>${job.sqft}</td>
+                            <td>${Util.escapeHtml(job.rate_type)}</td>
+                            <td>₹${Util.money(job.rate)}</td>
+                            <td>₹${Util.money(job.total)}</td>
+                            <td>₹${Util.money(job.advance)}</td>
+                            <td>₹${Util.money(job.paid)}</td>
+                            <td>₹${Util.money(job.remaining)}</td>
+                        </tr>
+                    </table>
+
+                    <div class="section-title">Advance History (with Date)</div>
+                    <table>
+                        <tr><th>#</th><th>Amount</th><th>Date Given</th></tr>
+                        ${advRowsHtml}
+                    </table>
+                </div>`;
+        });
+
+        content.innerHTML = `
+            <div class="print-area">
+                <h2>Job Summary Report</h2>
+                <div class="info"><strong>Worker ID:</strong> ${workerId}</div>
+                <div class="info"><strong>Name:</strong> ${Util.escapeHtml(workerName)}</div>
+
+                ${jobsHtml}
+
+                <table>
+                    <tr class="summary-row">
+                        <td colspan="3" style="text-align:right;">TOTAL FOR SELECTED JOBS</td>
+                        <td>₹${Util.money(gTotal)}</td>
+                        <td>₹${Util.money(gAdv)}</td>
+                        <td>₹${Util.money(gPaid)}</td>
+                        <td>₹${Util.money(gRem)}</td>
+                    </tr>
+                </table>
+
+                <button class="print-btn" onclick="window.print()">🖨️ Print Report</button>
+            </div>`;
+    }
+
+    render();
+</script>
+</body>
+</html>

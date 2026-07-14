@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Job Summary</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="container">
+    <h2>Job Summary</h2>
+    <div id="content"></div>
+</div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobIds = Util.qsAll("job_ids");
+    const content = document.getElementById("content");
+
+    function render() {
+        if (jobIds.length === 0) {
+            content.innerHTML = `
+                <p class="error">No jobs selected. Please go back and select at least one.</p>
+                <div style="text-align:center;"><a href="view_job.html" class="btn secondary">Back</a></div>`;
+            return;
+        }
+
+        let totalAmt = 0, totalAdv = 0, totalPaid = 0, totalRemain = 0;
+        jobIds.forEach(id => {
+            const job = DB.Jobs.get(id);
+            if (!job) return;
+            totalAmt += job.total;
+            totalAdv += job.advance;
+            totalPaid += job.paid;
+            totalRemain += job.remaining;
+        });
+
+        content.innerHTML = `
+            <table>
+                <tr><th>Total Amount</th><td>₹${Util.money(totalAmt)}</td></tr>
+                <tr><th>Total Advance</th><td>₹${Util.money(totalAdv)}</td></tr>
+                <tr><th>Total Paid</th><td>₹${Util.money(totalPaid)}</td></tr>
+                <tr><th>Total Remaining</th><td>₹${Util.money(totalRemain)}</td></tr>
+            </table>
+            <div style="text-align:center; margin-top: 20px;">
+                <a href="view_job.html" class="btn secondary">Back to Jobs</a>
+            </div>`;
+    }
+
+    render();
+</script>
+</body>
+</html>

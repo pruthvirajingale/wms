@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>System Summary</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="summary-box">
+    <h2>Dashboard</h2>
+    <div id="content"></div>
+</div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    function render() {
+        const s = DB.Jobs.summary();
+        document.getElementById("content").innerHTML = `
+            <table>
+                <tr>
+                    <td class="label">Total Jobs:</td>
+                    <td class="value">${s.totalJobs}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Sq. Feet:</td>
+                    <td class="value">${s.totalSqft}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Amount Calculated:</td>
+                    <td class="value positive">₹ ${Util.money(s.totalAmount)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Advance Given:</td>
+                    <td class="value">₹ ${Util.money(s.totalAdvance)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Paid:</td>
+                    <td class="value">₹ ${Util.money(s.totalPaid)}</td>
+                </tr>
+                <tr>
+                    <td class="label">Total Remaining:</td>
+                    <td class="value negative">₹ ${Util.money(s.totalRemaining)}</td>
+                </tr>
+            </table>`;
+    }
+
+    render();
+</script>
+</body>
+</html>

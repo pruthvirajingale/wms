@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assign Job</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="form-container">
+    <h2>Assign Job to Worker</h2>
+    <form id="addJobForm">
+        <label>Worker ID:</label>
+        <input type="number" name="worker_id" id="worker_id" required>
+
+        <label>Square Feet:</label>
+        <input type="number" name="sqft" id="sqft" required step="0.01">
+
+        <label>Rate Type:</label>
+        <select name="rate_type" id="rate_type" required>
+            <option value="gsb">GSB</option>
+            <option value="nonlight">Non-Light</option>
+            <option value="inshop">Inshop</option>
+        </select>
+
+        <label>Advance Taken:</label>
+        <input type="number" name="advance" id="advance" value="0" step="0.01">
+
+        <label>Amount Paid:</label>
+        <input type="number" name="paid" id="paid" value="0" step="0.01">
+
+        <label>Route / Company:</label>
+        <input type="text" name="route" id="route">
+
+        <button type="submit">Assign Job</button>
+    </form>
+
+    <div id="resultMessage"></div>
+</div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    document.getElementById("addJobForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const worker_id = document.getElementById("worker_id").value;
+        const sqft = parseFloat(document.getElementById("sqft").value);
+        const rate_type = document.getElementById("rate_type").value;
+        const advance = parseFloat(document.getElementById("advance").value) || 0;
+        const paid = parseFloat(document.getElementById("paid").value) || 0;
+        const route = document.getElementById("route").value;
+
+        const worker = DB.Workers.get(worker_id);
+        if (!worker) {
+            document.getElementById("resultMessage").innerHTML =
+                `<div class="error">Error: No worker found with ID ${Util.escapeHtml(worker_id)}.</div>`;
+            return;
+        }
+
+        try {
+            const job = DB.Jobs.add({ worker_id, sqft, rate_type, advance, paid, route });
+            document.getElementById("resultMessage").innerHTML = `
+                <div class="message">✅ Job assigned successfully! Total: ₹${Util.money(job.total)}, Remaining: ₹${Util.money(job.remaining)}</div>`;
+            document.getElementById("addJobForm").reset();
+            document.getElementById("advance").value = 0;
+            document.getElementById("paid").value = 0;
+        } catch (err) {
+            document.getElementById("resultMessage").innerHTML =
+                `<p style="color:red">Error: ${Util.escapeHtml(err.message)}</p>`;
+        }
+    });
+</script>
+</body>
+</html>

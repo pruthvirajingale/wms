@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Job</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div id="navbar-placeholder"></div>
+
+<div class="form-container" id="content"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobId = Util.qs("job_id");
+    const content = document.getElementById("content");
+
+    function renderForm(job) {
+        content.innerHTML = `
+            <h2>Edit Job ID: ${job.id}</h2>
+            <div id="resultMessage"></div>
+            <form id="editJobForm">
+                <label>Square Feet:</label>
+                <input type="number" name="sqft" id="sqft" value="${job.sqft}" required step="0.01">
+
+                <label>Rate Type:</label>
+                <select name="rate_type" id="rate_type" required>
+                    <option value="gsb" ${job.rate_type === "gsb" ? "selected" : ""}>GSB</option>
+                    <option value="nonlight" ${job.rate_type === "nonlight" ? "selected" : ""}>Non-Light</option>
+                    <option value="inshop" ${job.rate_type === "inshop" ? "selected" : ""}>Inshop</option>
+                </select>
+
+                <label>Advance Taken:</label>
+                <input type="number" name="advance" id="advance" value="${job.advance}" step="0.01">
+
+                <label>Amount Paid:</label>
+                <input type="number" name="paid" id="paid" value="${job.paid}" step="0.01">
+
+                <label>Days Taken:</label>
+                <input type="number" name="days" id="days" value="${job.days}">
+
+                <label>Route / Company:</label>
+                <input type="text" name="route" id="route" value="${Util.escapeHtml(job.route)}" required>
+
+                <button type="submit">Update Job</button>
+            </form>`;
+
+        document.getElementById("editJobForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const sqft = parseFloat(document.getElementById("sqft").value);
+            const rate_type = document.getElementById("rate_type").value;
+            const advance = parseFloat(document.getElementById("advance").value);
+            const paid = parseFloat(document.getElementById("paid").value);
+            const days = parseInt(document.getElementById("days").value, 10);
+            const route = document.getElementById("route").value;
+
+            const updated = DB.Jobs.update(jobId, { sqft, rate_type, advance, paid, days, route });
+            if (updated) {
+                document.getElementById("resultMessage").innerHTML = `
+                    <div class="message">Job updated successfully. New total: ₹${Util.money(updated.total)}, Remaining: ₹${Util.money(updated.remaining)}</div>
+                    <p style="text-align:center;"><a href="view_job.html?worker_id=${updated.worker_id}">Back to Worker's Jobs</a></p>`;
+            }
+        });
+    }
+
+    if (!jobId) {
+        content.innerHTML = `<p style="color:red;">❌ No Job ID specified.</p>`;
+    } else {
+        const job = DB.Jobs.get(jobId);
+        if (!job) {
+            content.innerHTML = `<p style="color:red;">❌ Job not found.</p>`;
+        } else {
+            renderForm(job);
+        }
+    }
+</script>
+</body>
+</html>

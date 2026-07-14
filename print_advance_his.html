@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Print Advance History</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+
+<div class="container print-area" id="content"></div>
+
+<script src="assets/db.js"></script>
+<script src="assets/app.js"></script>
+<script>
+    const jobId = Util.qs("job_id");
+    const content = document.getElementById("content");
+
+    function render() {
+        if (!jobId) {
+            content.innerHTML = `<p class="error">Job ID not provided.</p>`;
+            return;
+        }
+
+        const job = DB.Jobs.get(jobId);
+        if (!job) {
+            content.innerHTML = `<p class="error">No job found for this ID.</p>`;
+            return;
+        }
+
+        const worker = DB.Workers.get(job.worker_id);
+        const workerName = worker ? worker.name : "Unknown";
+        const advances = DB.Advances.forJob(jobId);
+
+        const rowsHtml = advances.length > 0
+            ? advances.map((a, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>₹${Util.money(a.amount)}</td>
+                    <td>${Util.formatDate(a.date_given)}</td>
+                </tr>`).join("")
+            : `<tr><td colspan="3">No advance entries.</td></tr>`;
+
+        content.innerHTML = `
+            <div class="print-header">
+                <h2>Advance History Report</h2>
+            </div>
+
+            <div class="detail-box">
+                <h3>Worker & Job Details</h3>
+                <p><strong>Worker Name:</strong> ${Util.escapeHtml(workerName)}</p>
+                <p><strong>Square Feet:</strong> ${job.sqft} sqft</p>
+                <p><strong>Rate:</strong> ₹${Util.money(job.rate)} per ${Util.escapeHtml(job.rate_type)}</p>
+                <p><strong>Total Amount:</strong> ₹${Util.money(job.total)}</p>
+                <p><strong>Advance:</strong> ₹${Util.money(job.advance)}</p>
+                <p><strong>Paid:</strong> ₹${Util.money(job.paid)}</p>
+                <p><strong>Remaining:</strong> ₹${Util.money(job.remaining)}</p>
+                <p><strong>Route:</strong> ${Util.escapeHtml(job.route)}</p>
+                <p><strong>Days:</strong> ${job.days}</p>
+            </div>
+
+            <h3>Advance History</h3>
+            <table>
+                <tr><th>#</th><th>Amount (₹)</th><th>Date Given</th></tr>
+                ${rowsHtml}
+            </table>
+
+            <div class="noprint">
+                <button class="btn primary" onclick="window.print()">Print</button>
+                <a class="btn secondary" href="javascript:history.back()">Back to Jobs</a>
+            </div>`;
+    }
+
+    render();
+</script>
+</body>
+</html>
