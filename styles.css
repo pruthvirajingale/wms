@@ -1,21 +1,7 @@
 /* ============================================================
    Global styling for Worker Payroll App
-   Dark mode — Perplexity-inspired, Cascadia Code typeface
+   Dark mode — Perplexity-inspired, native UI sans-serif
    ============================================================ */
-
-@font-face {
-    font-family: 'Cascadia Code';
-    src: local('Cascadia Code'), local('CascadiaCode'),
-         url('https://cdn.jsdelivr.net/gh/microsoft/cascadia-code@v2111.01/ttf/static/CascadiaCode-Regular.ttf') format('truetype');
-    font-weight: 400;
-}
-
-@font-face {
-    font-family: 'Cascadia Code';
-    src: local('Cascadia Code SemiBold'),
-         url('https://cdn.jsdelivr.net/gh/microsoft/cascadia-code@v2111.01/ttf/static/CascadiaCode-SemiBold.ttf') format('truetype');
-    font-weight: 600 700;
-}
 
 :root {
     --bg: #191a1a;
@@ -38,13 +24,13 @@
     --warning: #d3a24a;
     --info-blue: #5b9bd5;
     --radius: 8px;
-    --font-mono: 'Cascadia Code', 'Cascadia Mono', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     background-color: var(--bg);
     margin: 0;
     padding: 0;
@@ -165,7 +151,7 @@ textarea {
     border-radius: 6px;
     border: 1px solid var(--border);
     font-size: 14px;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     background: var(--bg);
     color: var(--text);
     box-sizing: border-box;
@@ -210,7 +196,7 @@ button,
     height: 40px;
     font-size: 14px;
     font-weight: 500;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     padding: 0 16px;
     border: 1px solid transparent;
     border-radius: 6px;
@@ -437,7 +423,7 @@ a.name-link:hover { text-decoration: underline; }
     border: none;
     padding: 12px 30px;
     font-size: 15px;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     border-radius: 6px;
     cursor: pointer;
 }
